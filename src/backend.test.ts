@@ -42,12 +42,12 @@ describe("createAgentSandboxBackend handle", () => {
     expect(spec.argv).toContain("--tty");
   });
 
-  it("buildExecSpec env carries the wrapper TTL vars", async () => {
+  it("buildExecSpec env does NOT carry removed TTL vars", async () => {
     const h = createAgentSandboxBackend(args as any);
     const spec = await h.buildExecSpec({ command: "x", env: {}, usePty: false });
-    expect(spec.env.AGENT_SANDBOX_TTL_ACTIVE_SECONDS).toBe("300");
-    expect(spec.env.AGENT_SANDBOX_TTL_IDLE_SECONDS).toBe("1800");
-    expect(spec.env.AGENT_SANDBOX_RENEW_INTERVAL_SECONDS).toBe("60");
+    expect(spec.env).not.toHaveProperty("AGENT_SANDBOX_TTL_ACTIVE_SECONDS");
+    expect(spec.env).not.toHaveProperty("AGENT_SANDBOX_TTL_IDLE_SECONDS");
+    expect(spec.env).not.toHaveProperty("AGENT_SANDBOX_RENEW_INTERVAL_SECONDS");
   });
 });
 

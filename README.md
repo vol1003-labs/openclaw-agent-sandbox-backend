@@ -30,10 +30,10 @@ All keys are optional; defaults are shown. Provide overrides via the plugin conf
 | `warmPool` | `openclaw-runner` | `WarmPool` the claim binds from (`spec.warmPoolRef.name`). |
 | `container` | `runner` | Container to exec into within the sandbox Pod. |
 | `workdir` | `/workspace` | Working directory for exec sessions. |
-| `ttlIdleSeconds` | `1800` | Idle shutdown TTL (`spec.lifecycle.shutdownTime = now + this`). |
-| `ttlActiveSeconds` | `300` | Active-lease TTL renewed while a command runs. |
-| `renewIntervalSeconds` | `60` | How often the in-pod wrapper renews the lease/shutdownTime. |
+| `shutdownAfterSeconds` | `86400` | Sandbox hard shutdown deadline (set to now+this at factory; a zombie-sandbox safeguard). |
 | `readyTimeoutSeconds` | `120` | Max wait for the bound sandbox Pod to become Ready. |
+
+Per-exec env is passed to the in-pod command via `env KEY=value` (consistent with OpenClaw's other sandbox backends); truly sensitive secrets should be mounted as files via the host Pod spec (host environment) rather than passed as exec env.
 
 ## Host wiring
 

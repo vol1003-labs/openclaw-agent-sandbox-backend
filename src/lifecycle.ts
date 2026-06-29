@@ -1,5 +1,4 @@
 import {
-  ACTIVE_LEASE_ANNOTATION,
   ASSIGNED_SANDBOX_NAME_ANNOTATION,
   MANAGED_BY_LABEL,
   SANDBOX_CLAIM_GROUP,
@@ -58,32 +57,6 @@ export function buildShutdownPatch(shutdownTimeRfc3339: string): Record<string, 
   return { spec: { lifecycle: { shutdownTime: shutdownTimeRfc3339 } } };
 }
 
-export function buildLeasePatch(p: {
-  shutdownTimeRfc3339: string;
-  leaseUntilRfc3339: string;
-}): Record<string, unknown> {
-  return {
-    metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: p.leaseUntilRfc3339 } },
-    spec: { lifecycle: { shutdownTime: p.shutdownTimeRfc3339 } },
-  };
-}
-
-export function buildLeaseReleasePatch(shutdownTimeRfc3339: string): Record<string, unknown> {
-  // null value in a strategic/merge patch removes the annotation key.
-  return {
-    metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: null } },
-    spec: { lifecycle: { shutdownTime: shutdownTimeRfc3339 } },
-  };
-}
-
 export function readAssignedSandboxName(claim: ClaimLike): string | undefined {
   return claim.metadata?.annotations?.[ASSIGNED_SANDBOX_NAME_ANNOTATION];
-}
-
-export function isClaimInUse(claim: ClaimLike, now: Date): boolean {
-  const raw = claim.metadata?.annotations?.[ACTIVE_LEASE_ANNOTATION];
-  if (!raw) return false;
-  const t = Date.parse(raw);
-  if (Number.isNaN(t)) return false;
-  return t > now.getTime();
 }

@@ -3,12 +3,9 @@ import {
   computeRfc3339,
   buildClaimManifest,
   buildShutdownPatch,
-  buildLeasePatch,
-  buildLeaseReleasePatch,
   readAssignedSandboxName,
-  isClaimInUse,
 } from "./lifecycle.js";
-import { ACTIVE_LEASE_ANNOTATION, ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
+import { ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
 
 const NOW = new Date("2026-06-29T12:00:00.000Z");
 
@@ -43,18 +40,6 @@ describe("patches", () => {
       spec: { lifecycle: { shutdownTime: "2026-06-29T12:30:00.000Z" } },
     });
   });
-  it("buildLeasePatch sets shutdownTime and the lease annotation", () => {
-    const p = buildLeasePatch({ shutdownTimeRfc3339: "A", leaseUntilRfc3339: "B" });
-    expect(p).toEqual({
-      metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: "B" } },
-      spec: { lifecycle: { shutdownTime: "A" } },
-    });
-  });
-  it("buildLeaseReleasePatch clears the lease annotation with null", () => {
-    const p = buildLeaseReleasePatch("A") as any;
-    expect(p.metadata.annotations[ACTIVE_LEASE_ANNOTATION]).toBeNull();
-    expect(p.spec.lifecycle.shutdownTime).toBe("A");
-  });
 });
 
 describe("readAssignedSandboxName", () => {
@@ -65,18 +50,5 @@ describe("readAssignedSandboxName", () => {
   });
   it("returns undefined when missing", () => {
     expect(readAssignedSandboxName({})).toBeUndefined();
-  });
-});
-
-describe("isClaimInUse", () => {
-  it("true when lease is in the future", () => {
-    expect(isClaimInUse({ metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: "2026-06-29T12:05:00.000Z" } } }, NOW)).toBe(true);
-  });
-  it("false when lease is in the past", () => {
-    expect(isClaimInUse({ metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: "2026-06-29T11:59:00.000Z" } } }, NOW)).toBe(false);
-  });
-  it("false when annotation missing or unparseable", () => {
-    expect(isClaimInUse({}, NOW)).toBe(false);
-    expect(isClaimInUse({ metadata: { annotations: { [ACTIVE_LEASE_ANNOTATION]: "not-a-date" } } }, NOW)).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import { resolveAgentSandboxPluginConfig } from "./config.js";
 import { ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
 import type { SandboxK8sApi, SandboxClaimObject, PodLike } from "./k8s-client.js";
 
-const cfg = resolveAgentSandboxPluginConfig({ readyTimeoutSeconds: 2, renewIntervalSeconds: 1 });
+const cfg = resolveAgentSandboxPluginConfig({ readyTimeoutSeconds: 2 });
 const createParams = {
   sessionKey: "agent:coding:main",
   scopeKey: "agent:coding",

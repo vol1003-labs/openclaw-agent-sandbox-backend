@@ -8,26 +8,24 @@ describe("resolveAgentSandboxPluginConfig", () => {
       warmPool: "openclaw-runner",
       container: "runner",
       workdir: "/workspace",
-      ttlIdleSeconds: 1800,
-      ttlActiveSeconds: 300,
-      renewIntervalSeconds: 60,
+      shutdownAfterSeconds: 86400,
       readyTimeoutSeconds: 120,
     });
   });
 
   it("overrides only provided fields", () => {
-    const c = resolveAgentSandboxPluginConfig({ namespace: "ns2", ttlIdleSeconds: 60 });
+    const c = resolveAgentSandboxPluginConfig({ namespace: "ns2", shutdownAfterSeconds: 3600 });
     expect(c.namespace).toBe("ns2");
-    expect(c.ttlIdleSeconds).toBe(60);
+    expect(c.shutdownAfterSeconds).toBe(3600);
     expect(c.warmPool).toBe("openclaw-runner");
   });
 
   it("rejects wrong types", () => {
     expect(() => resolveAgentSandboxPluginConfig({ namespace: 5 })).toThrow(/namespace/);
-    expect(() => resolveAgentSandboxPluginConfig({ ttlIdleSeconds: "x" })).toThrow(/ttlIdleSeconds/);
+    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: "x" })).toThrow(/shutdownAfterSeconds/);
   });
 
-  it("rejects non-positive ttl", () => {
-    expect(() => resolveAgentSandboxPluginConfig({ ttlActiveSeconds: 0 })).toThrow(/ttlActiveSeconds/);
+  it("rejects non-positive shutdownAfterSeconds", () => {
+    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: 0 })).toThrow(/shutdownAfterSeconds/);
   });
 });

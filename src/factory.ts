@@ -43,7 +43,7 @@ export function createAgentSandboxBackendFactory(deps: FactoryDeps): SandboxBack
   return async (createParams) => {
     const claimName = buildClaimName(createParams.scopeKey);
     const ns = cfg.namespace;
-    const shutdownTime = computeRfc3339(now(), cfg.ttlIdleSeconds);
+    const shutdownTime = computeRfc3339(now(), cfg.shutdownAfterSeconds);
 
     let createdByUs = false;
     const existing = await k8s.getClaim(ns, claimName);

@@ -11,8 +11,6 @@ export const SANDBOX_PLURAL = "sandboxes" as const;
 /** Controller-set annotation on the claim naming the bound Sandbox (== Pod name). */
 export const ASSIGNED_SANDBOX_NAME_ANNOTATION = "agents.x-k8s.io/sandbox-name" as const;
 
-/** Our own annotation (RFC3339): set/renewed by the wrapper while a command runs. */
-export const ACTIVE_LEASE_ANNOTATION = "agent-sandbox.openclaw.dev/active-lease" as const;
 /** Identifies claims this plugin created (for diagnostics / selective cleanup). */
 export const MANAGED_BY_LABEL = "agent-sandbox.openclaw.dev/managed-by" as const;
 /** Records the originating OpenClaw scopeKey on the claim. */

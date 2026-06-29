@@ -3,9 +3,7 @@ export type AgentSandboxPluginConfig = {
   warmPool: string;
   container: string;
   workdir: string;
-  ttlIdleSeconds: number;
-  ttlActiveSeconds: number;
-  renewIntervalSeconds: number;
+  shutdownAfterSeconds: number;
   readyTimeoutSeconds: number;
 };
 
@@ -14,17 +12,13 @@ const DEFAULTS: AgentSandboxPluginConfig = {
   warmPool: "openclaw-runner",
   container: "runner",
   workdir: "/workspace",
-  ttlIdleSeconds: 1800,
-  ttlActiveSeconds: 300,
-  renewIntervalSeconds: 60,
+  shutdownAfterSeconds: 86400,
   readyTimeoutSeconds: 120,
 };
 
 const STRING_KEYS = ["namespace", "warmPool", "container", "workdir"] as const;
 const POSITIVE_INT_KEYS = [
-  "ttlIdleSeconds",
-  "ttlActiveSeconds",
-  "renewIntervalSeconds",
+  "shutdownAfterSeconds",
   "readyTimeoutSeconds",
 ] as const;
 
