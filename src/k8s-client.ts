@@ -17,13 +17,14 @@ export type PodLike = {
 
 export class NotFoundError extends Error {}
 export class QuotaExceededError extends Error {}
+export class AlreadyExistsError extends Error {}
 
 export function isPodReady(pod: PodLike): boolean {
   if (pod.status?.phase !== "Running") return false;
   return (pod.status.conditions ?? []).some((c) => c.type === "Ready" && c.status === "True");
 }
 
-export function classifyK8sError(err: unknown): "notfound" | "quota" | "other" {
+export function classifyK8sError(err: unknown): "notfound" | "quota" | "alreadyexists" | "other" {
   const e = err as {
     statusCode?: number;
     code?: number;
@@ -32,6 +33,7 @@ export function classifyK8sError(err: unknown): "notfound" | "quota" | "other" {
   const status = e?.statusCode ?? e?.response?.statusCode ?? e?.code;
   if (status === 404) return "notfound";
   if (status === 403) return "quota";
+  if (status === 409) return "alreadyexists";
   return "other";
 }
 
@@ -77,6 +79,11 @@ export function createSandboxK8sApi(): SandboxK8sApi {
         if (classifyK8sError(err) === "quota") {
           throw new QuotaExceededError(
             `ResourceQuota exceeded creating SandboxClaim ${manifest.metadata.name}`,
+          );
+        }
+        if (classifyK8sError(err) === "alreadyexists") {
+          throw new AlreadyExistsError(
+            `SandboxClaim ${manifest.metadata.name} already exists (concurrent create race)`,
           );
         }
         throw err;

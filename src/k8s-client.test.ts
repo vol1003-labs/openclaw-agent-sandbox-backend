@@ -26,6 +26,12 @@ describe("classifyK8sError", () => {
   });
   it("maps 403 to quota", () => {
     expect(classifyK8sError({ statusCode: 403 })).toBe("quota");
+    expect(classifyK8sError({ code: 403 })).toBe("quota");
+  });
+  it("maps 409 to alreadyexists", () => {
+    expect(classifyK8sError({ statusCode: 409 })).toBe("alreadyexists");
+    expect(classifyK8sError({ response: { statusCode: 409 } })).toBe("alreadyexists");
+    expect(classifyK8sError({ code: 409 })).toBe("alreadyexists");
   });
   it("other otherwise", () => {
     expect(classifyK8sError({ statusCode: 500 })).toBe("other");

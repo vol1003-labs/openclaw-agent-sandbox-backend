@@ -11,7 +11,7 @@ import {
   computeRfc3339,
   readAssignedSandboxName,
 } from "./lifecycle.js";
-import { isPodReady, QuotaExceededError, type SandboxK8sApi } from "./k8s-client.js";
+import { isPodReady, AlreadyExistsError, QuotaExceededError, type SandboxK8sApi } from "./k8s-client.js";
 import { createAgentSandboxBackend } from "./backend.js";
 
 export type BuildHandleArgs = {
@@ -65,7 +65,19 @@ export function createAgentSandboxBackendFactory(deps: FactoryDeps): SandboxBack
             `agent-sandbox: cannot create sandbox for ${createParams.scopeKey}: ${err.message}`,
           );
         }
-        throw err;
+        if (err instanceof AlreadyExistsError) {
+          // Lost a concurrent create race: another caller created the claim first.
+          // Adopt the existing claim — do NOT set createdByUs so we never roll it back.
+          const raced = await k8s.getClaim(ns, claimName);
+          if (raced == null) {
+            // Claim vanished immediately after the race — unusual, surface the error.
+            throw err;
+          }
+          await k8s.patchClaim(ns, claimName, buildShutdownPatch(shutdownTime));
+          // createdByUs stays false — fall through to waitForBoundReadyPod below.
+        } else {
+          throw err;
+        }
       }
     } else {
       // Adopt: extend the idle shutdownTime so the controller does not reap it under us.

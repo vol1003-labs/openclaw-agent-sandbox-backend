@@ -67,6 +67,30 @@ it("rolls back a self-created claim if the pod never becomes ready", async () =>
   expect(deleteClaim).toHaveBeenCalledOnce(); // rolled back because WE created it
 });
 
+it("adopts when createClaim loses a create race (409)", async () => {
+  const { AlreadyExistsError } = await import("./k8s-client.js");
+  const deleteClaim = vi.fn(async () => {});
+  const patchClaim = vi.fn(async () => {});
+  // getClaim: first call null (triggers createClaim), subsequent calls return claim with annotation
+  const claimAnnotation = { [ASSIGNED_SANDBOX_NAME_ANNOTATION]: "sb-race" };
+  const racedClaim = { metadata: { name: "x", annotations: claimAnnotation } } as any;
+  const getClaim = vi.fn().mockResolvedValueOnce(null).mockResolvedValue(racedClaim);
+  const k8s = fakeK8s({
+    getClaim: getClaim as any,
+    createClaim: async () => { throw new AlreadyExistsError("409 race"); },
+    patchClaim,
+    deleteClaim: deleteClaim as any,
+  });
+  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub } as any);
+  const handle = await factory(createParams as any);
+  // adopted, not rejected
+  expect(handle.runtimeId).toMatch(/^agent-sandbox-agent-coding-/);
+  // adopt path: patchClaim called to extend shutdownTime
+  expect(patchClaim).toHaveBeenCalled();
+  // must NOT delete: we did NOT create this claim
+  expect(deleteClaim).not.toHaveBeenCalled();
+});
+
 it("surfaces quota errors without rollback (nothing was created)", async () => {
   const { QuotaExceededError } = await import("./k8s-client.js");
   const deleteClaim = vi.fn();
