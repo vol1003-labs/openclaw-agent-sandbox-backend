@@ -25,6 +25,18 @@ describe("composeInPodArgv", () => {
       "pwd",
     ]);
   });
+  it("escapes single quotes in workdir using the '\\'' POSIX technique", () => {
+    expect(composeInPodArgv({ base: ["/bin/sh", "-c", "pwd"], workdir: "/it's/dir" })).toEqual([
+      "/bin/sh",
+      "-c",
+      "cd '/it'\\''s/dir' && exec \"$@\"",
+      "_",
+      "/bin/sh",
+      "-c",
+      "pwd",
+    ]);
+  });
+
   it("combines env + workdir (env outermost)", () => {
     expect(composeInPodArgv({ base: ["echo", "hi"], env: { A: "1" }, workdir: "/w" })).toEqual([
       "env",

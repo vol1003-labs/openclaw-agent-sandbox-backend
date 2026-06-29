@@ -39,6 +39,26 @@ describe("sanitizeExecEnv", () => {
     expect(out.MY_SECRET).toBeUndefined();
     expect(out.AWS_ACCESS_KEY_ID).toBeUndefined();
   });
+
+  it("drops SECRET_* prefix vars", () => {
+    const out = sanitizeExecEnv({ SECRET_FOO: "leak" });
+    expect(out.SECRET_FOO).toBeUndefined();
+  });
+
+  it("drops *_KEY suffix vars that are not AWS (non-AWS _KEY$ pattern)", () => {
+    const out = sanitizeExecEnv({ PRIVATE_KEY: "pem-data" });
+    expect(out.PRIVATE_KEY).toBeUndefined();
+  });
+
+  it("drops PASSWORD vars", () => {
+    const out = sanitizeExecEnv({ DB_PASSWORD: "hunter2" });
+    expect(out.DB_PASSWORD).toBeUndefined();
+  });
+
+  it("keeps arbitrary operational vars (e.g. LANG)", () => {
+    const out = sanitizeExecEnv({ LANG: "en_US.UTF-8" });
+    expect(out.LANG).toBe("en_US.UTF-8");
+  });
 });
 
 describe("EXEC_ENV_VAR", () => {

@@ -46,6 +46,7 @@ describe("createAgentSandboxBackend handle", () => {
     const h = createAgentSandboxBackend(args as any);
     const spec = await h.buildExecSpec({ command: "x", env: {}, usePty: false });
     expect(spec.env.AGENT_SANDBOX_TTL_ACTIVE_SECONDS).toBe("300");
+    expect(spec.env.AGENT_SANDBOX_TTL_IDLE_SECONDS).toBe("1800");
     expect(spec.env.AGENT_SANDBOX_RENEW_INTERVAL_SECONDS).toBe("60");
   });
 });
