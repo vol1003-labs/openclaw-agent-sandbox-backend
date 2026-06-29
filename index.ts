@@ -13,7 +13,7 @@ const pluginEntry: OpenClawPluginDefinition = definePluginEntry({
   register(api) {
     if (api.registrationMode !== "full") return;
     const pluginConfig = resolveAgentSandboxPluginConfig(api.pluginConfig);
-    const wrapperPath = fileURLToPath(new URL("./exec-wrapper.js", import.meta.url));
+    const wrapperPath = fileURLToPath(new URL("./src/exec-wrapper.js", import.meta.url));
     registerSandboxBackend(BACKEND_ID, buildRegistration({ pluginConfig, k8s: createSandboxK8sApi(), wrapperPath }));
   },
 });
