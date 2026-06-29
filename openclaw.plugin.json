@@ -1,0 +1,20 @@
+{
+  "id": "agent-sandbox",
+  "name": "Agent Sandbox (Kubernetes/gVisor)",
+  "description": "Runs agent terminal/exec inside gVisor agent-sandbox Pods via in-cluster pods/exec.",
+  "activation": { "onStartup": true },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "namespace": { "type": "string", "minLength": 1 },
+      "warmPool": { "type": "string", "minLength": 1 },
+      "container": { "type": "string", "minLength": 1 },
+      "workdir": { "type": "string", "minLength": 1 },
+      "ttlIdleSeconds": { "type": "number", "minimum": 1 },
+      "ttlActiveSeconds": { "type": "number", "minimum": 1 },
+      "renewIntervalSeconds": { "type": "number", "minimum": 1 },
+      "readyTimeoutSeconds": { "type": "number", "minimum": 1 }
+    }
+  }
+}
