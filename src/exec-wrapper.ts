@@ -52,42 +52,45 @@ async function main(): Promise<void> {
   const timer = setInterval(() => void renew(), renewInterval * 1000);
 
   const exec = new k8s.Exec(kc);
-  const exitCode = await new Promise<number>((resolve, reject) => {
-    exec
-      .exec(
-        a.ns,
-        a.pod,
-        a.container,
-        finalArgv,
-        process.stdout,
-        process.stderr,
-        process.stdin,
-        a.usePty,
-        (status: k8s.V1Status) => {
-          // status.status === "Success" => 0; otherwise parse exit code from causes/message.
-          if (status.status === "Success") return resolve(0);
-          const causeCode = status.details?.causes?.find((c) => c.reason === "ExitCode")?.message;
-          resolve(causeCode ? Number(causeCode) : 1);
+  let exitCode = 1;
+  try {
+    exitCode = await new Promise<number>((resolve, reject) => {
+      exec
+        .exec(
+          a.ns,
+          a.pod,
+          a.container,
+          finalArgv,
+          process.stdout,
+          process.stderr,
+          process.stdin,
+          a.usePty,
+          (status: k8s.V1Status) => {
+            // status.status === "Success" => 0; otherwise parse exit code from causes/message.
+            if (status.status === "Success") return resolve(0);
+            const causeCode = status.details?.causes?.find((c) => c.reason === "ExitCode")?.message;
+            resolve(causeCode ? Number(causeCode) : 1);
+          },
+        )
+        .catch(reject);
+      // Note: PTY resize (when usePty && stdout.isTTY) is handled automatically by
+      // the k8s Exec class via TerminalSizeQueue when stdout has rows/columns properties.
+    });
+  } finally {
+    clearInterval(timer);
+    // Release the lease and shorten to idle TTL so the claim reaps promptly when idle.
+    await custom
+      .patchNamespacedCustomObject(
+        {
+          ...g,
+          namespace: a.ns,
+          name: a.claim,
+          body: buildLeaseReleasePatch(computeRfc3339(new Date(), ttlIdle)),
         },
+        patchOpts,
       )
-      .catch(reject);
-    // Note: PTY resize (when usePty && stdout.isTTY) is handled automatically by
-    // the k8s Exec class via TerminalSizeQueue when stdout has rows/columns properties.
-  });
-
-  clearInterval(timer);
-  // Release the lease and shorten to idle TTL so the claim reaps promptly when idle.
-  await custom
-    .patchNamespacedCustomObject(
-      {
-        ...g,
-        namespace: a.ns,
-        name: a.claim,
-        body: buildLeaseReleasePatch(computeRfc3339(new Date(), ttlIdle)),
-      },
-      patchOpts,
-    )
-    .catch(() => {});
+      .catch(() => {});
+  }
   process.exit(exitCode);
 }
 
