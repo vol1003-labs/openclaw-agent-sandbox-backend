@@ -7,6 +7,7 @@ import type {
 } from "openclaw/plugin-sdk/sandbox";
 import { BACKEND_ID } from "./constants.js";
 import { buildWrapperArgv, sanitizeExecEnv, EXEC_ENV_VAR } from "./exec-spec.js";
+import type { AgentSandboxPluginConfig } from "./config.js";
 import type { BuildHandleArgs } from "./factory.js";
 
 export function buildRunShellInPodCommand(p: { script: string; args?: string[] }): string[] {
@@ -43,7 +44,13 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
       const inPodCommand = ["/bin/sh", "-c", command];
       return {
         argv: wrapperArgvFor(inPodCommand, usePty, workdir),
-        env: { ...sanitizeExecEnv(process.env), [EXEC_ENV_VAR]: JSON.stringify(env ?? {}) },
+        env: {
+          ...sanitizeExecEnv(process.env),
+          [EXEC_ENV_VAR]: JSON.stringify(env ?? {}),
+          AGENT_SANDBOX_TTL_ACTIVE_SECONDS: String(cfg.ttlActiveSeconds),
+          AGENT_SANDBOX_TTL_IDLE_SECONDS: String(cfg.ttlIdleSeconds),
+          AGENT_SANDBOX_RENEW_INTERVAL_SECONDS: String(cfg.renewIntervalSeconds),
+        },
         stdinMode: "pipe-open",
       };
     },
@@ -54,7 +61,7 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
         ...(params.args ? { args: params.args } : {}),
       });
       const argv = wrapperArgvFor(inPodCommand, false);
-      return runBufferedWrapper(argv, params);
+      return runBufferedWrapper(argv, params, cfg);
     },
   };
 }
@@ -62,12 +69,19 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
 function runBufferedWrapper(
   argv: string[],
   params: SandboxBackendCommandParams,
+  cfg: AgentSandboxPluginConfig,
 ): Promise<SandboxBackendCommandResult> {
   return new Promise((resolve, reject) => {
     const [cmd, ...rest] = argv;
     const child = spawn(cmd as string, rest, {
       stdio: ["pipe", "pipe", "pipe"],
-      env: { ...sanitizeExecEnv(process.env), [EXEC_ENV_VAR]: JSON.stringify({}) },
+      env: {
+        ...sanitizeExecEnv(process.env),
+        [EXEC_ENV_VAR]: JSON.stringify({}),
+        AGENT_SANDBOX_TTL_ACTIVE_SECONDS: String(cfg.ttlActiveSeconds),
+        AGENT_SANDBOX_TTL_IDLE_SECONDS: String(cfg.ttlIdleSeconds),
+        AGENT_SANDBOX_RENEW_INTERVAL_SECONDS: String(cfg.renewIntervalSeconds),
+      },
     });
     const out: Buffer[] = [];
     const err: Buffer[] = [];
