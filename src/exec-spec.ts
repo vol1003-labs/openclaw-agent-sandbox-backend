@@ -5,7 +5,6 @@ export function buildWrapperArgv(p: {
   namespace: string;
   pod: string;
   container: string;
-  claim: string;
   usePty: boolean;
   workdir?: string;
   inPodCommand: string[];
@@ -19,8 +18,6 @@ export function buildWrapperArgv(p: {
     p.pod,
     "--container",
     p.container,
-    "--claim",
-    p.claim,
     p.usePty ? "--tty" : "--no-tty",
     ...(p.workdir ? ["--workdir", p.workdir] : []),
     "--",

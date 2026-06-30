@@ -23,7 +23,6 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
       namespace: cfg.namespace,
       pod: podName,
       container: cfg.container,
-      claim: claimName,
       usePty,
       ...(workdir ? { workdir } : {}),
       inPodCommand,

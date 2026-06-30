@@ -7,7 +7,6 @@ describe("buildWrapperArgv", () => {
     namespace: "openclaw",
     pod: "sb-1",
     container: "runner",
-    claim: "agent-sandbox-x",
   };
   it("emits node + wrapper + flags + -- + inPodCommand (no-pty, no workdir)", () => {
     expect(
@@ -21,8 +20,6 @@ describe("buildWrapperArgv", () => {
       "sb-1",
       "--container",
       "runner",
-      "--claim",
-      "agent-sandbox-x",
       "--no-tty",
       "--",
       "/bin/sh",

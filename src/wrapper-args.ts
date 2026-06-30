@@ -2,7 +2,6 @@ export type WrapperArgs = {
   ns: string;
   pod: string;
   container: string;
-  claim: string;
   usePty: boolean;
   workdir?: string;
   inPodCommand: string[];
@@ -29,7 +28,6 @@ export function parseWrapperArgs(argv: string[]): WrapperArgs {
   const ns = required("--ns");
   const pod = required("--pod");
   const container = required("--container");
-  const claim = required("--claim");
   const workdir = get("--workdir");
   const usePty = flags.includes("--tty");
 
@@ -37,7 +35,6 @@ export function parseWrapperArgs(argv: string[]): WrapperArgs {
     ns,
     pod,
     container,
-    claim,
     usePty,
     ...(workdir ? { workdir } : {}),
     inPodCommand,
