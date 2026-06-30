@@ -1,9 +1,5 @@
 import * as k8s from "@kubernetes/client-node";
-import {
-  SANDBOX_CLAIM_GROUP,
-  SANDBOX_CLAIM_PLURAL,
-  SANDBOX_CLAIM_VERSION,
-} from "./constants.js";
+import { SANDBOX_CLAIM_GROUP, SANDBOX_CLAIM_PLURAL, SANDBOX_CLAIM_VERSION } from "./constants.js";
 import type { ClaimLike, SandboxClaimManifest } from "./lifecycle.js";
 
 export type SandboxClaimObject = ClaimLike & {

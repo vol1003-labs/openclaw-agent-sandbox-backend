@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { isPodReady, classifyK8sError } from "./k8s-client.js";
+import { describe, expect, it } from "vitest";
+import { classifyK8sError, isPodReady } from "./k8s-client.js";
 
 describe("isPodReady", () => {
   it("true when Running and Ready=True", () => {
@@ -11,7 +11,9 @@ describe("isPodReady", () => {
   });
   it("false when Ready missing or not True", () => {
     expect(
-      isPodReady({ status: { phase: "Running", conditions: [{ type: "Ready", status: "False" }] } }),
+      isPodReady({
+        status: { phase: "Running", conditions: [{ type: "Ready", status: "False" }] },
+      }),
     ).toBe(false);
     expect(isPodReady({ status: { phase: "Pending" } })).toBe(false);
     expect(isPodReady({})).toBe(false);

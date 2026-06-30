@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { buildClaimName, toLabelSafe } from "./names.js";
 
 describe("buildClaimName", () => {
@@ -9,7 +9,9 @@ describe("buildClaimName", () => {
     expect(buildClaimName("agent:coding")).not.toBe(buildClaimName("agent:general"));
   });
   it("is RFC1123 label-safe and bounded", () => {
-    const n = buildClaimName("agent:WeIrD/Scope key__with.dots:and:colons-and-a-very-long-suffix-xxxxxxxx");
+    const n = buildClaimName(
+      "agent:WeIrD/Scope key__with.dots:and:colons-and-a-very-long-suffix-xxxxxxxx",
+    );
     expect(n).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
     expect(n.length).toBeLessThanOrEqual(63);
     expect(n.startsWith("agent-sandbox-")).toBe(true);

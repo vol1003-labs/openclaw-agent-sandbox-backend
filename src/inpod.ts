@@ -9,7 +9,11 @@ function shSingleQuote(s: string): string {
  * - `workdir` is applied via `sh -c 'cd <q(workdir)> && exec "$@"' _ <base...>` so the
  *   base argv is passed positionally and never string-interpolated (injection-safe).
  */
-export function composeInPodArgv(p: { base: string[]; env?: Record<string, string>; workdir?: string }): string[] {
+export function composeInPodArgv(p: {
+  base: string[];
+  env?: Record<string, string>;
+  workdir?: string;
+}): string[] {
   let argv = [...p.base];
   if (p.workdir) {
     argv = ["/bin/sh", "-c", `cd ${shSingleQuote(p.workdir)} && exec "$@"`, "_", ...argv];

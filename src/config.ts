@@ -17,10 +17,7 @@ const DEFAULTS: AgentSandboxPluginConfig = {
 };
 
 const STRING_KEYS = ["namespace", "warmPool", "container", "workdir"] as const;
-const POSITIVE_INT_KEYS = [
-  "shutdownAfterSeconds",
-  "readyTimeoutSeconds",
-] as const;
+const POSITIVE_INT_KEYS = ["shutdownAfterSeconds", "readyTimeoutSeconds"] as const;
 
 export function resolveAgentSandboxPluginConfig(raw: unknown): AgentSandboxPluginConfig {
   if (raw == null) return { ...DEFAULTS };

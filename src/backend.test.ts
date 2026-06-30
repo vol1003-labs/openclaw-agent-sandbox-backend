@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { createAgentSandboxBackend, buildRunShellInPodCommand } from "./backend.js";
+import { describe, expect, it } from "vitest";
+import { buildRunShellInPodCommand, createAgentSandboxBackend } from "./backend.js";
 import { resolveAgentSandboxPluginConfig } from "./config.js";
 import { EXEC_ENV_VAR } from "./exec-spec.js";
 
@@ -8,7 +8,10 @@ const args = {
   pluginConfig: cfg,
   claimName: "agent-sandbox-coding-deadbeef",
   podName: "sb-1",
-  createParams: { scopeKey: "agent:coding", cfg: { docker: { env: { FOO: "bar" }, image: "img" } } } as any,
+  createParams: {
+    scopeKey: "agent:coding",
+    cfg: { docker: { env: { FOO: "bar" }, image: "img" } },
+  } as any,
   k8s: {} as any,
   wrapperPath: "/p/dist/exec-wrapper.js",
 };
@@ -24,7 +27,12 @@ describe("createAgentSandboxBackend handle", () => {
 
   it("buildExecSpec emits wrapper argv targeting the pod and passes exec env as JSON (not argv)", async () => {
     const h = createAgentSandboxBackend(args as any);
-    const spec = await h.buildExecSpec({ command: "echo hi", workdir: "/workspace", env: { SECRETLESS: "1" }, usePty: false });
+    const spec = await h.buildExecSpec({
+      command: "echo hi",
+      workdir: "/workspace",
+      env: { SECRETLESS: "1" },
+      usePty: false,
+    });
     expect(spec.argv[0]).toBe(process.execPath);
     expect(spec.argv).toContain("--pod");
     expect(spec.argv[spec.argv.indexOf("--pod") + 1]).toBe("sb-1");
@@ -54,10 +62,20 @@ describe("createAgentSandboxBackend handle", () => {
 describe("buildRunShellInPodCommand", () => {
   it("runs the script via /bin/sh -c with positional args after $0", () => {
     expect(buildRunShellInPodCommand({ script: "echo $1", args: ["a", "b"] })).toEqual([
-      "/bin/sh", "-c", "echo $1", "agent-sandbox", "a", "b",
+      "/bin/sh",
+      "-c",
+      "echo $1",
+      "agent-sandbox",
+      "a",
+      "b",
     ]);
   });
   it("handles no args", () => {
-    expect(buildRunShellInPodCommand({ script: "id" })).toEqual(["/bin/sh", "-c", "id", "agent-sandbox"]);
+    expect(buildRunShellInPodCommand({ script: "id" })).toEqual([
+      "/bin/sh",
+      "-c",
+      "id",
+      "agent-sandbox",
+    ]);
   });
 });

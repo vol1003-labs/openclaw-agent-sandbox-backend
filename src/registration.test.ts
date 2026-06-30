@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { buildRegistration } from "./registration.js";
+import { describe, expect, it } from "vitest";
 import { resolveAgentSandboxPluginConfig } from "./config.js";
 import type { SandboxK8sApi } from "./k8s-client.js";
+import { buildRegistration } from "./registration.js";
 
 const cfg = resolveAgentSandboxPluginConfig({ workdir: "/workspace" });
 const k8s = {} as SandboxK8sApi;

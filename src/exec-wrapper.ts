@@ -1,7 +1,7 @@
 import * as k8s from "@kubernetes/client-node";
-import { parseWrapperArgs } from "./wrapper-args.js";
-import { composeInPodArgv } from "./inpod.js";
 import { EXEC_ENV_VAR } from "./exec-spec.js";
+import { composeInPodArgv } from "./inpod.js";
+import { parseWrapperArgs } from "./wrapper-args.js";
 
 async function main(): Promise<void> {
   const a = parseWrapperArgs(process.argv.slice(2));

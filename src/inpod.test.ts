@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { composeInPodArgv } from "./inpod.js";
 
 describe("composeInPodArgv", () => {
@@ -6,19 +6,15 @@ describe("composeInPodArgv", () => {
     expect(composeInPodArgv({ base: ["/bin/sh", "-c", "ls"] })).toEqual(["/bin/sh", "-c", "ls"]);
   });
   it("prepends env pairs", () => {
-    expect(composeInPodArgv({ base: ["/bin/sh", "-c", "echo $FOO"], env: { FOO: "bar baz" } })).toEqual([
-      "env",
-      "FOO=bar baz",
-      "/bin/sh",
-      "-c",
-      "echo $FOO",
-    ]);
+    expect(
+      composeInPodArgv({ base: ["/bin/sh", "-c", "echo $FOO"], env: { FOO: "bar baz" } }),
+    ).toEqual(["env", "FOO=bar baz", "/bin/sh", "-c", "echo $FOO"]);
   });
-  it("wraps with cd <workdir> && exec \"$@\" using argv (no interpolation of base into the script)", () => {
+  it('wraps with cd <workdir> && exec "$@" using argv (no interpolation of base into the script)', () => {
     expect(composeInPodArgv({ base: ["/bin/sh", "-c", "pwd"], workdir: "/work dir" })).toEqual([
       "/bin/sh",
       "-c",
-      'cd \'/work dir\' && exec "$@"',
+      "cd '/work dir' && exec \"$@\"",
       "_",
       "/bin/sh",
       "-c",
@@ -43,7 +39,7 @@ describe("composeInPodArgv", () => {
       "A=1",
       "/bin/sh",
       "-c",
-      'cd \'/w\' && exec "$@"',
+      "cd '/w' && exec \"$@\"",
       "_",
       "echo",
       "hi",

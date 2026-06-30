@@ -4,12 +4,23 @@
   "description": "OpenClaw sandbox backend that runs agent terminal/exec inside gVisor agent-sandbox (Kubernetes) Pods via in-cluster pods/exec.",
   "license": "MIT",
   "type": "module",
-  "repository": { "type": "git", "url": "https://github.com/vol1003/openclaw-agent-sandbox-backend" },
-  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vol1003/openclaw-agent-sandbox-backend"
+  },
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "vitest run",
     "prepack": "npm run build"
   },
@@ -20,21 +31,33 @@
     "openclaw": ">=2026.6.10"
   },
   "devDependencies": {
-    "openclaw": "2026.6.10",
+    "@biomejs/biome": "^2.5.1",
     "@types/node": "^22.0.0",
+    "openclaw": "2026.6.10",
     "typescript": "^5.9.0",
     "vitest": "^2.0.0"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "openclaw": {
-    "extensions": ["./index.ts"],
-    "runtimeExtensions": ["./dist/index.js"],
+    "extensions": [
+      "./index.ts"
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
+    ],
     "install": {
       "npmSpec": "openclaw-agent-sandbox-backend",
       "defaultChoice": "npm",
       "minHostVersion": ">=2026.6.10"
     },
-    "compat": { "pluginApi": ">=2026.6.10" },
-    "build": { "openclawVersion": "2026.6.10", "bundledDist": false }
+    "compat": {
+      "pluginApi": ">=2026.6.10"
+    },
+    "build": {
+      "openclawVersion": "2026.6.10",
+      "bundledDist": false
+    }
   }
 }

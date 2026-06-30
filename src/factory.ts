@@ -3,16 +3,21 @@ import type {
   SandboxBackendFactory,
   SandboxBackendHandle,
 } from "openclaw/plugin-sdk/sandbox";
+import { createAgentSandboxBackend } from "./backend.js";
 import type { AgentSandboxPluginConfig } from "./config.js";
-import { buildClaimName } from "./names.js";
+import {
+  AlreadyExistsError,
+  isPodReady,
+  QuotaExceededError,
+  type SandboxK8sApi,
+} from "./k8s-client.js";
 import {
   buildClaimManifest,
   buildShutdownPatch,
   computeRfc3339,
   readAssignedSandboxName,
 } from "./lifecycle.js";
-import { isPodReady, AlreadyExistsError, QuotaExceededError, type SandboxK8sApi } from "./k8s-client.js";
-import { createAgentSandboxBackend } from "./backend.js";
+import { buildClaimName } from "./names.js";
 
 export type BuildHandleArgs = {
   pluginConfig: AgentSandboxPluginConfig;
@@ -127,9 +132,7 @@ async function waitForBoundReadyPod(p: {
     if (podName === undefined) {
       const claim = await p.k8s.getClaim(p.ns, p.claimName);
       if (claim == null) {
-        throw new Error(
-          `agent-sandbox: claim ${p.claimName} disappeared while waiting for bind`,
-        );
+        throw new Error(`agent-sandbox: claim ${p.claimName} disappeared while waiting for bind`);
       }
       podName = readAssignedSandboxName(claim);
     }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { resolveAgentSandboxPluginConfig } from "./config.js";
 
 describe("resolveAgentSandboxPluginConfig", () => {
@@ -22,10 +22,14 @@ describe("resolveAgentSandboxPluginConfig", () => {
 
   it("rejects wrong types", () => {
     expect(() => resolveAgentSandboxPluginConfig({ namespace: 5 })).toThrow(/namespace/);
-    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: "x" })).toThrow(/shutdownAfterSeconds/);
+    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: "x" })).toThrow(
+      /shutdownAfterSeconds/,
+    );
   });
 
   it("rejects non-positive shutdownAfterSeconds", () => {
-    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: 0 })).toThrow(/shutdownAfterSeconds/);
+    expect(() => resolveAgentSandboxPluginConfig({ shutdownAfterSeconds: 0 })).toThrow(
+      /shutdownAfterSeconds/,
+    );
   });
 });

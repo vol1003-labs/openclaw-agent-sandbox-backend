@@ -1,10 +1,4 @@
-import { describe, it, expect } from "vitest";
-import {
-  computeRfc3339,
-  buildClaimManifest,
-  buildShutdownPatch,
-  readAssignedSandboxName,
-} from "./lifecycle.js";
+import { describe, expect, it } from "vitest";
 import {
   ASSIGNED_SANDBOX_NAME_ANNOTATION,
   MANAGED_BY_LABEL,
@@ -12,6 +6,12 @@ import {
   SCOPE_KEY_ANNOTATION,
   SCOPE_KEY_LABEL,
 } from "./constants.js";
+import {
+  buildClaimManifest,
+  buildShutdownPatch,
+  computeRfc3339,
+  readAssignedSandboxName,
+} from "./lifecycle.js";
 
 const NOW = new Date("2026-06-29T12:00:00.000Z");
 
@@ -64,7 +64,9 @@ describe("patches", () => {
 describe("readAssignedSandboxName", () => {
   it("returns the bound sandbox name annotation", () => {
     expect(
-      readAssignedSandboxName({ metadata: { annotations: { [ASSIGNED_SANDBOX_NAME_ANNOTATION]: "sb-1" } } }),
+      readAssignedSandboxName({
+        metadata: { annotations: { [ASSIGNED_SANDBOX_NAME_ANNOTATION]: "sb-1" } },
+      }),
     ).toBe("sb-1");
   });
   it("returns undefined when missing", () => {

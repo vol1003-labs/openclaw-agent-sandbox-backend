@@ -6,8 +6,7 @@ import type {
   SandboxBackendHandle,
 } from "openclaw/plugin-sdk/sandbox";
 import { BACKEND_ID } from "./constants.js";
-import { buildWrapperArgv, sanitizeExecEnv, EXEC_ENV_VAR } from "./exec-spec.js";
-import type { AgentSandboxPluginConfig } from "./config.js";
+import { buildWrapperArgv, EXEC_ENV_VAR, sanitizeExecEnv } from "./exec-spec.js";
 import type { BuildHandleArgs } from "./factory.js";
 
 export function buildRunShellInPodCommand(p: { script: string; args?: string[] }): string[] {
@@ -52,7 +51,9 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
       };
     },
 
-    async runShellCommand(params: SandboxBackendCommandParams): Promise<SandboxBackendCommandResult> {
+    async runShellCommand(
+      params: SandboxBackendCommandParams,
+    ): Promise<SandboxBackendCommandResult> {
       const inPodCommand = buildRunShellInPodCommand({
         script: params.script,
         ...(params.args ? { args: params.args } : {}),
