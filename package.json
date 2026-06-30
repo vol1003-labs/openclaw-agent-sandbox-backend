@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "repository": { "type": "git", "url": "https://github.com/vol1003/openclaw-agent-sandbox-backend" },
-  "files": ["dist", "index.ts", "src", "openclaw.plugin.json", "README.md", "LICENSE"],
+  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -27,13 +27,14 @@
   },
   "engines": { "node": ">=20" },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": ["./index.ts"],
+    "runtimeExtensions": ["./dist/index.js"],
     "install": {
       "npmSpec": "openclaw-agent-sandbox-backend",
       "defaultChoice": "npm",
       "minHostVersion": ">=2026.6.10"
     },
     "compat": { "pluginApi": ">=2026.6.10" },
-    "build": { "openclawVersion": "2026.6.10", "bundledDist": true }
+    "build": { "openclawVersion": "2026.6.10", "bundledDist": false }
   }
 }
