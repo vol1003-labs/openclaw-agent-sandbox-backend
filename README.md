@@ -1,5 +1,10 @@
 # openclaw-agent-sandbox-backend
 
+[![CI](https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/openclaw-agent-sandbox-backend)](https://www.npmjs.com/package/openclaw-agent-sandbox-backend)
+[![GitHub release](https://img.shields.io/github/v/release/vol1003-labs/openclaw-agent-sandbox-backend)](https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/releases)
+[![License: MIT](https://img.shields.io/github/license/vol1003-labs/openclaw-agent-sandbox-backend)](./LICENSE)
+
 An OpenClaw sandbox backend plugin that runs agent terminal/exec sessions inside gVisor-isolated `agent-sandbox` Pods on Kubernetes. It allocates sandboxes via `SandboxClaim` custom resources and streams terminal I/O through the Kubernetes `pods/exec` subresource — all from in-cluster, with no external tunnel required.
 
 ## Install
