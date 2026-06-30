@@ -4,10 +4,6 @@ export const SANDBOX_CLAIM_GROUP = "extensions.agents.x-k8s.io" as const;
 export const SANDBOX_CLAIM_VERSION = "v1beta1" as const;
 export const SANDBOX_CLAIM_PLURAL = "sandboxclaims" as const;
 
-export const SANDBOX_GROUP = "agents.x-k8s.io" as const;
-export const SANDBOX_VERSION = "v1beta1" as const;
-export const SANDBOX_PLURAL = "sandboxes" as const;
-
 /** Controller-set annotation on the claim naming the bound Sandbox (== Pod name). */
 export const ASSIGNED_SANDBOX_NAME_ANNOTATION = "agents.x-k8s.io/sandbox-name" as const;
 
