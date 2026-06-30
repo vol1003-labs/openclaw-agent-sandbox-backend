@@ -26,9 +26,22 @@ describe("classifyK8sError", () => {
     expect(classifyK8sError({ response: { statusCode: 404 } })).toBe("notfound");
     expect(classifyK8sError({ code: 404 })).toBe("notfound");
   });
-  it("maps 403 to quota", () => {
-    expect(classifyK8sError({ statusCode: 403 })).toBe("quota");
-    expect(classifyK8sError({ code: 403 })).toBe("quota");
+  it("maps a quota-exceeded 403 to quota", () => {
+    expect(
+      classifyK8sError({ code: 403, message: "sandboxclaims is forbidden: exceeded quota: rq" }),
+    ).toBe("quota");
+    expect(classifyK8sError({ statusCode: 403, body: { message: "exceeded quota: rq" } })).toBe(
+      "quota",
+    );
+  });
+  it("maps a non-quota 403 (RBAC/forbidden) to other, not quota", () => {
+    expect(
+      classifyK8sError({
+        code: 403,
+        message: 'sandboxclaims is forbidden: User "sa" cannot create',
+      }),
+    ).toBe("other");
+    expect(classifyK8sError({ statusCode: 403 })).toBe("other");
   });
   it("maps 409 to alreadyexists", () => {
     expect(classifyK8sError({ statusCode: 409 })).toBe("alreadyexists");

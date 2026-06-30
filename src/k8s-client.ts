@@ -25,11 +25,19 @@ export function classifyK8sError(err: unknown): "notfound" | "quota" | "alreadye
     statusCode?: number;
     code?: number;
     response?: { statusCode?: number };
+    message?: string;
+    body?: unknown;
   };
   const status = e?.statusCode ?? e?.response?.statusCode ?? e?.code;
   if (status === 404) return "notfound";
-  if (status === 403) return "quota";
   if (status === 409) return "alreadyexists";
+  if (status === 403) {
+    // 403 covers BOTH ResourceQuota violations and RBAC/admission denials;
+    // only call it "quota" when the message says so, so an RBAC misconfig is
+    // not mislabelled as quota-exceeded (acute during host environment RBAC wiring).
+    const body = typeof e?.body === "string" ? e.body : e?.body ? JSON.stringify(e.body) : "";
+    return /exceeded quota/i.test(`${e?.message ?? ""} ${body}`) ? "quota" : "other";
+  }
   return "other";
 }
 
@@ -88,11 +96,13 @@ export function createSandboxK8sApi(): SandboxK8sApi {
         if (classifyK8sError(err) === "quota") {
           throw new QuotaExceededError(
             `ResourceQuota exceeded creating SandboxClaim ${manifest.metadata.name}`,
+            { cause: err },
           );
         }
         if (classifyK8sError(err) === "alreadyexists") {
           throw new AlreadyExistsError(
             `SandboxClaim ${manifest.metadata.name} already exists (concurrent create race)`,
+            { cause: err },
           );
         }
         throw err;
