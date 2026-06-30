@@ -63,13 +63,20 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
   };
 }
 
+/** Grace period after SIGTERM before escalating to SIGKILL on abort. */
+const SIGKILL_GRACE_MS = 2000;
+
 function runBufferedWrapper(
   argv: string[],
   params: SandboxBackendCommandParams,
 ): Promise<SandboxBackendCommandResult> {
   return new Promise((resolve, reject) => {
     const [cmd, ...rest] = argv;
-    const child = spawn(cmd as string, rest, {
+    if (cmd === undefined) {
+      reject(new Error("agent-sandbox runShellCommand: empty wrapper argv"));
+      return;
+    }
+    const child = spawn(cmd, rest, {
       stdio: ["pipe", "pipe", "pipe"],
       env: {
         ...sanitizeExecEnv(process.env),
@@ -80,16 +87,39 @@ function runBufferedWrapper(
     const err: Buffer[] = [];
     child.stdout.on("data", (d: Buffer) => out.push(d));
     child.stderr.on("data", (d: Buffer) => err.push(d));
-    if (params.signal) {
-      params.signal.addEventListener("abort", () => child.kill("SIGTERM"), { once: true });
+
+    // Abort: SIGTERM, then escalate to SIGKILL if the process ignores it.
+    const signal = params.signal;
+    let killTimer: NodeJS.Timeout | undefined;
+    const onAbort = () => {
+      child.kill("SIGTERM");
+      killTimer = setTimeout(() => child.kill("SIGKILL"), SIGKILL_GRACE_MS);
+      killTimer.unref();
+    };
+    const cleanup = () => {
+      if (killTimer) clearTimeout(killTimer);
+      signal?.removeEventListener("abort", onAbort);
+    };
+    if (signal?.aborted) {
+      onAbort();
+    } else {
+      signal?.addEventListener("abort", onAbort, { once: true });
     }
+
+    // Ignore stdin write errors (EPIPE) when the command exits without reading stdin.
+    child.stdin.on("error", () => {});
     if (params.stdin !== undefined) {
       child.stdin.end(typeof params.stdin === "string" ? Buffer.from(params.stdin) : params.stdin);
     } else {
       child.stdin.end();
     }
-    child.on("error", reject);
+
+    child.on("error", (e) => {
+      cleanup();
+      reject(e);
+    });
     child.on("close", (code) => {
+      cleanup();
       const result = { stdout: Buffer.concat(out), stderr: Buffer.concat(err), code: code ?? -1 };
       if (result.code !== 0 && !params.allowFailure) {
         reject(
