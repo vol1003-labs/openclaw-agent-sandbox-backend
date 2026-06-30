@@ -33,11 +33,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
-    "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@types/node": "^26.0.1",
+    "@vitest/coverage-v8": "^4.1.9",
     "openclaw": "2026.6.10",
-    "typescript": "^5.9.0",
-    "vitest": "^2.0.0"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": ">=20"
