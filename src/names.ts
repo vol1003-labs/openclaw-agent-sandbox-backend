@@ -10,18 +10,26 @@ function hash8(input: string): string {
 }
 
 /**
+ * scopeKey → RFC1123/label-safe slug: lowercase [a-z0-9-], <= 32 chars,
+ * no leading/trailing '-', never empty ("scope" fallback). Shared by the
+ * claim-name body and the selectable scope-key label value.
+ */
+export function toLabelSafe(scopeKey: string): string {
+  const safe = scopeKey
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32)
+    .replace(/^-+|-+$/g, "");
+  return safe.length > 0 ? safe : "scope";
+}
+
+/**
  * Deterministic, RFC1123-label-safe SandboxClaim name for a scopeKey
  * (e.g. "agent:coding"). Shape: agent-sandbox-<safe>-<hash8>, <= 63 chars.
  */
 export function buildClaimName(scopeKey: string): string {
   const trimmed = scopeKey.trim();
-  const safe = trimmed
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 32);
-  const body = safe.length > 0 ? safe : "scope";
-  const name = `${PREFIX}-${body}-${hash8(trimmed)}`;
-  // Trim trailing '-' that could appear if body ended at the slice boundary.
-  return name.replace(/-+(?=-[0-9a-f]{8}$)/, "").replace(/^-+|-+$/g, "");
+  return `${PREFIX}-${toLabelSafe(trimmed)}-${hash8(trimmed)}`;
 }

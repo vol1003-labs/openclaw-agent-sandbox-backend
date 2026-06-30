@@ -5,7 +5,13 @@ import {
   buildShutdownPatch,
   readAssignedSandboxName,
 } from "./lifecycle.js";
-import { ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
+import {
+  ASSIGNED_SANDBOX_NAME_ANNOTATION,
+  MANAGED_BY_LABEL,
+  MANAGED_BY_VALUE,
+  SCOPE_KEY_ANNOTATION,
+  SCOPE_KEY_LABEL,
+} from "./constants.js";
 
 const NOW = new Date("2026-06-29T12:00:00.000Z");
 
@@ -31,6 +37,19 @@ describe("buildClaimManifest", () => {
     expect(m.spec.warmPoolRef.name).toBe("openclaw-runner");
     expect(m.spec.lifecycle.shutdownPolicy).toBe("Delete");
     expect(m.spec.lifecycle.shutdownTime).toBe("2026-06-29T12:30:00.000Z");
+  });
+
+  it("marks managed-by and records scopeKey as both a selectable label and an exact annotation", () => {
+    const m = buildClaimManifest({
+      name: "agent-sandbox-coding-deadbeef",
+      namespace: "openclaw",
+      warmPool: "openclaw-runner",
+      scopeKey: "agent:coding",
+      shutdownTimeRfc3339: "2026-06-29T12:30:00.000Z",
+    });
+    expect(m.metadata.labels[MANAGED_BY_LABEL]).toBe(MANAGED_BY_VALUE);
+    expect(m.metadata.labels[SCOPE_KEY_LABEL]).toBe("agent-coding");
+    expect(m.metadata.annotations[SCOPE_KEY_ANNOTATION]).toBe("agent:coding");
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildClaimName } from "./names.js";
+import { buildClaimName, toLabelSafe } from "./names.js";
 
 describe("buildClaimName", () => {
   it("is deterministic", () => {
@@ -17,5 +17,22 @@ describe("buildClaimName", () => {
   it("handles empty scopeKey without producing an invalid name", () => {
     const n = buildClaimName("");
     expect(n).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
+  });
+});
+
+describe("toLabelSafe", () => {
+  it("sanitizes to a valid k8s label value", () => {
+    const v = toLabelSafe("agent:Coding/Work");
+    expect(v).toBe("agent-coding-work");
+    expect(v).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
+  });
+  it("falls back to 'scope' when nothing usable remains", () => {
+    expect(toLabelSafe("")).toBe("scope");
+    expect(toLabelSafe("///")).toBe("scope");
+  });
+  it("bounds length to 32 with no trailing dash", () => {
+    const v = toLabelSafe(`${"x".repeat(31)}:tail`);
+    expect(v.length).toBeLessThanOrEqual(32);
+    expect(v.endsWith("-")).toBe(false);
   });
 });
