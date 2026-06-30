@@ -3,6 +3,7 @@ import { createAgentSandboxBackendFactory } from "./factory.js";
 import { resolveAgentSandboxPluginConfig } from "./config.js";
 import { ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
 import type { SandboxK8sApi, SandboxClaimObject, PodLike } from "./k8s-client.js";
+import { computeRfc3339, buildShutdownPatch } from "./lifecycle.js";
 
 const cfg = resolveAgentSandboxPluginConfig({ readyTimeoutSeconds: 2 });
 const createParams = {
@@ -49,10 +50,13 @@ it("adopts (patches shutdownTime) when the claim already exists, does NOT create
     createClaim: createClaim as any,
     patchClaim,
   });
-  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub } as any);
+  const fixedNow = new Date("2026-06-30T00:00:00.000Z");
+  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub, now: () => fixedNow } as any);
   await factory(createParams as any);
   expect(createClaim).not.toHaveBeenCalled();
-  expect(patchClaim).toHaveBeenCalled(); // adopt = extend shutdownTime
+  // adopt = extend shutdownTime to now + shutdownAfterSeconds (value, not just "was called")
+  const expectedPatch = buildShutdownPatch(computeRfc3339(fixedNow, cfg.shutdownAfterSeconds));
+  expect(patchClaim).toHaveBeenCalledWith(cfg.namespace, expect.stringMatching(/^agent-sandbox-agent-coding-/), expectedPatch);
 });
 
 it("rolls back a self-created claim if the pod never becomes ready", async () => {
@@ -62,7 +66,15 @@ it("rolls back a self-created claim if the pod never becomes ready", async () =>
     getPod: async () => null,
     deleteClaim,
   });
-  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub, sleep: async () => {}, now: () => new Date() } as any);
+  let nowMs = 0;
+  const factory = createAgentSandboxBackendFactory({
+    pluginConfig: cfg,
+    k8s,
+    wrapperPath: "/p",
+    buildHandle: handleStub,
+    sleep: async (ms: number) => { nowMs += ms; }, // advance a virtual clock instead of waiting real time
+    now: () => new Date(nowMs),
+  } as any);
   await expect(factory(createParams as any)).rejects.toThrow(/ready|timeout/i);
   expect(deleteClaim).toHaveBeenCalledOnce(); // rolled back because WE created it
 });
@@ -81,12 +93,14 @@ it("adopts when createClaim loses a create race (409)", async () => {
     patchClaim,
     deleteClaim: deleteClaim as any,
   });
-  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub } as any);
+  const fixedNow = new Date("2026-06-30T00:00:00.000Z");
+  const factory = createAgentSandboxBackendFactory({ pluginConfig: cfg, k8s, wrapperPath: "/p", buildHandle: handleStub, now: () => fixedNow } as any);
   const handle = await factory(createParams as any);
   // adopted, not rejected
   expect(handle.runtimeId).toMatch(/^agent-sandbox-agent-coding-/);
-  // adopt path: patchClaim called to extend shutdownTime
-  expect(patchClaim).toHaveBeenCalled();
+  // adopt path: patchClaim extends shutdownTime to now + shutdownAfterSeconds (value asserted)
+  const expectedPatch = buildShutdownPatch(computeRfc3339(fixedNow, cfg.shutdownAfterSeconds));
+  expect(patchClaim).toHaveBeenCalledWith(cfg.namespace, expect.stringMatching(/^agent-sandbox-agent-coding-/), expectedPatch);
   // must NOT delete: we did NOT create this claim
   expect(deleteClaim).not.toHaveBeenCalled();
 });
