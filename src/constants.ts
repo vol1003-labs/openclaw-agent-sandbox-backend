@@ -4,8 +4,19 @@ export const SANDBOX_CLAIM_GROUP = "extensions.agents.x-k8s.io" as const;
 export const SANDBOX_CLAIM_VERSION = "v1beta1" as const;
 export const SANDBOX_CLAIM_PLURAL = "sandboxclaims" as const;
 
-/** Controller-set annotation on the claim naming the bound Sandbox (== Pod name). */
+export const SANDBOX_GROUP = "agents.x-k8s.io" as const;
+export const SANDBOX_VERSION = "v1beta1" as const;
+export const SANDBOX_PLURAL = "sandboxes" as const;
+
+/** Controller-set annotation on the claim naming the bound Sandbox. */
 export const ASSIGNED_SANDBOX_NAME_ANNOTATION = "agents.x-k8s.io/sandbox-name" as const;
+/**
+ * Controller-set annotation on the Sandbox carrying its Pod name. Under warm-pool
+ * adoption the Pod name can differ from the Sandbox name, so the Pod must be
+ * resolved from this annotation (falling back to the Sandbox name) — see
+ * resolvePodName. Mirrors the controller's `agents.x-k8s.io/pod-name`.
+ */
+export const SANDBOX_POD_NAME_ANNOTATION = "agents.x-k8s.io/pod-name" as const;
 
 /** Identifies claims this plugin created (for diagnostics / selective cleanup). */
 export const MANAGED_BY_LABEL = "agent-sandbox.openclaw.dev/managed-by" as const;

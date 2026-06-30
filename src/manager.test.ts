@@ -19,6 +19,7 @@ function fakeK8s(over: Partial<SandboxK8sApi>): SandboxK8sApi {
     patchClaim: async () => {},
     deleteClaim: async () => {},
     getPod: async () => null,
+    getSandbox: async () => null,
     ...over,
   };
 }

@@ -1,6 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { resolveAgentSandboxPluginConfig } from "./config.js";
-import { ASSIGNED_SANDBOX_NAME_ANNOTATION } from "./constants.js";
+import { ASSIGNED_SANDBOX_NAME_ANNOTATION, SANDBOX_POD_NAME_ANNOTATION } from "./constants.js";
 import { createAgentSandboxBackendFactory } from "./factory.js";
 import type { PodLike, SandboxClaimObject, SandboxK8sApi } from "./k8s-client.js";
 import { buildShutdownPatch, computeRfc3339 } from "./lifecycle.js";
@@ -25,6 +25,7 @@ function fakeK8s(over: Partial<SandboxK8sApi>): SandboxK8sApi {
       ({
         status: { phase: "Running", conditions: [{ type: "Ready", status: "True" }] },
       }) as PodLike,
+    getSandbox: async (_ns: string, name: string) => ({ metadata: { name } }),
     ...over,
   };
 }
@@ -159,6 +160,45 @@ it("adopts when createClaim loses a create race (409)", async () => {
   );
   // must NOT delete: we did NOT create this claim
   expect(deleteClaim).not.toHaveBeenCalled();
+});
+
+it("resolves the Pod name from the Sandbox pod-name annotation (warm-pool adoption may differ from the Sandbox name)", async () => {
+  let capturedPodName: string | undefined;
+  const getPod = vi.fn(
+    async (_ns: string, name: string) =>
+      (name === "warm-pod-xyz"
+        ? { status: { phase: "Running", conditions: [{ type: "Ready", status: "True" }] } }
+        : null) as PodLike | null,
+  );
+  const k8s = fakeK8s({
+    getClaim: async () =>
+      ({
+        metadata: { name: "x", annotations: { [ASSIGNED_SANDBOX_NAME_ANNOTATION]: "sb-1" } },
+      }) as any,
+    // Bound Sandbox "sb-1" whose Pod is actually named "warm-pod-xyz" via annotation.
+    getSandbox: async (_ns: string, name: string) =>
+      ({
+        metadata: { name, annotations: { [SANDBOX_POD_NAME_ANNOTATION]: "warm-pod-xyz" } },
+      }) as any,
+    getPod,
+  });
+  let nowMs = 0;
+  const factory = createAgentSandboxBackendFactory({
+    pluginConfig: cfg,
+    k8s,
+    wrapperPath: "/p",
+    buildHandle: (args: any) => {
+      capturedPodName = args.podName;
+      return handleStub(args);
+    },
+    sleep: async (ms: number) => {
+      nowMs += ms;
+    },
+    now: () => new Date(nowMs),
+  } as any);
+  await factory(createParams as any);
+  expect(capturedPodName).toBe("warm-pod-xyz");
+  expect(getPod).toHaveBeenCalledWith(cfg.namespace, "warm-pod-xyz");
 });
 
 it("surfaces quota errors without rollback (nothing was created)", async () => {

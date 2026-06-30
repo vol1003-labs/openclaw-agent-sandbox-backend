@@ -3,6 +3,7 @@ import {
   ASSIGNED_SANDBOX_NAME_ANNOTATION,
   MANAGED_BY_LABEL,
   MANAGED_BY_VALUE,
+  SANDBOX_POD_NAME_ANNOTATION,
   SCOPE_KEY_ANNOTATION,
   SCOPE_KEY_LABEL,
 } from "./constants.js";
@@ -11,6 +12,7 @@ import {
   buildShutdownPatch,
   computeRfc3339,
   readAssignedSandboxName,
+  resolvePodName,
 } from "./lifecycle.js";
 
 const NOW = new Date("2026-06-29T12:00:00.000Z");
@@ -71,5 +73,21 @@ describe("readAssignedSandboxName", () => {
   });
   it("returns undefined when missing", () => {
     expect(readAssignedSandboxName({})).toBeUndefined();
+  });
+});
+
+describe("resolvePodName", () => {
+  it("prefers the pod-name annotation (warm-pool Pod name may differ from Sandbox name)", () => {
+    expect(
+      resolvePodName({
+        metadata: { name: "sb-1", annotations: { [SANDBOX_POD_NAME_ANNOTATION]: "warm-pod-xyz" } },
+      }),
+    ).toBe("warm-pod-xyz");
+  });
+  it("falls back to the Sandbox name when the annotation is absent", () => {
+    expect(resolvePodName({ metadata: { name: "sb-1" } })).toBe("sb-1");
+  });
+  it("returns undefined when there is no name", () => {
+    expect(resolvePodName({})).toBeUndefined();
   });
 });

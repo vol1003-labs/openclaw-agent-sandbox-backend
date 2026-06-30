@@ -16,6 +16,7 @@ import {
   buildShutdownPatch,
   computeRfc3339,
   readAssignedSandboxName,
+  resolvePodName,
 } from "./lifecycle.js";
 import { buildClaimName } from "./names.js";
 
@@ -90,12 +91,10 @@ export function createAgentSandboxBackendFactory(deps: FactoryDeps): SandboxBack
     }
 
     try {
-      // NOTE: The assumption here (factory.ts ~line 75) is that the bound Sandbox name
-      // == the Pod name. This is the v1a documented assumption — the controller sets
-      // ASSIGNED_SANDBOX_NAME_ANNOTATION to the Sandbox name and the Sandbox controller
-      // creates a Pod with the same name. If a label-selector fallback is ever needed,
-      // replace the `getPod(ns, podName)` call inside waitForBoundReadyPod with a pod
-      // list by label.
+      // The bound Pod name is resolved from the Sandbox's pod-name annotation
+      // (falling back to the Sandbox name): under warm-pool adoption the controller's
+      // Pod name can differ from the Sandbox name. See waitForBoundReadyPod /
+      // resolvePodName (mirrors the controller's resolvePodName).
       const podName = await waitForBoundReadyPod({ k8s, ns, claimName, cfg, now, sleep });
       return buildHandle({
         pluginConfig: cfg,
@@ -134,7 +133,11 @@ async function waitForBoundReadyPod(p: {
       if (claim == null) {
         throw new Error(`agent-sandbox: claim ${p.claimName} disappeared while waiting for bind`);
       }
-      podName = readAssignedSandboxName(claim);
+      const sandboxName = readAssignedSandboxName(claim);
+      if (sandboxName !== undefined) {
+        const sandbox = await p.k8s.getSandbox(p.ns, sandboxName);
+        if (sandbox !== null) podName = resolvePodName(sandbox);
+      }
     }
 
     if (podName !== undefined) {

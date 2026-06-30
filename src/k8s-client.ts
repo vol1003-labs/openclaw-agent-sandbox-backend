@@ -1,6 +1,13 @@
 import * as k8s from "@kubernetes/client-node";
-import { SANDBOX_CLAIM_GROUP, SANDBOX_CLAIM_PLURAL, SANDBOX_CLAIM_VERSION } from "./constants.js";
-import type { ClaimLike, SandboxClaimManifest } from "./lifecycle.js";
+import {
+  SANDBOX_CLAIM_GROUP,
+  SANDBOX_CLAIM_PLURAL,
+  SANDBOX_CLAIM_VERSION,
+  SANDBOX_GROUP,
+  SANDBOX_PLURAL,
+  SANDBOX_VERSION,
+} from "./constants.js";
+import type { ClaimLike, SandboxClaimManifest, SandboxLike } from "./lifecycle.js";
 
 export type SandboxClaimObject = ClaimLike & {
   metadata: { name: string; namespace?: string; annotations?: Record<string, string> };
@@ -59,6 +66,7 @@ export interface SandboxK8sApi {
   patchClaim(ns: string, name: string, patch: Record<string, unknown>): Promise<void>;
   deleteClaim(ns: string, name: string): Promise<void>;
   getPod(ns: string, name: string): Promise<PodLike | null>;
+  getSandbox(ns: string, name: string): Promise<SandboxLike | null>;
 }
 
 export function createSandboxK8sApi(): SandboxK8sApi {
@@ -144,6 +152,23 @@ export function createSandboxK8sApi(): SandboxK8sApi {
       try {
         const res = await core.readNamespacedPod({ namespace: ns, name });
         return res as unknown as PodLike;
+      } catch (err) {
+        if (classifyK8sError(err) === "notfound") return null;
+        throw err;
+      }
+    },
+
+    async getSandbox(ns, name) {
+      const { custom } = get();
+      try {
+        const res = await custom.getNamespacedCustomObject({
+          group: SANDBOX_GROUP,
+          version: SANDBOX_VERSION,
+          plural: SANDBOX_PLURAL,
+          namespace: ns,
+          name,
+        });
+        return res as unknown as SandboxLike;
       } catch (err) {
         if (classifyK8sError(err) === "notfound") return null;
         throw err;

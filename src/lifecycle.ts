@@ -4,6 +4,7 @@ import {
   MANAGED_BY_VALUE,
   SANDBOX_CLAIM_GROUP,
   SANDBOX_CLAIM_VERSION,
+  SANDBOX_POD_NAME_ANNOTATION,
   SCOPE_KEY_ANNOTATION,
   SCOPE_KEY_LABEL,
 } from "./constants.js";
@@ -27,6 +28,10 @@ export type SandboxClaimManifest = {
 export type ClaimLike = {
   metadata?: { annotations?: Record<string, string> };
   spec?: { lifecycle?: { shutdownTime?: string } };
+};
+
+export type SandboxLike = {
+  metadata?: { name?: string; annotations?: Record<string, string> };
 };
 
 export function computeRfc3339(now: Date, plusSeconds: number): string {
@@ -65,4 +70,13 @@ export function buildShutdownPatch(shutdownTimeRfc3339: string): Record<string, 
 
 export function readAssignedSandboxName(claim: ClaimLike): string | undefined {
   return claim.metadata?.annotations?.[ASSIGNED_SANDBOX_NAME_ANNOTATION];
+}
+
+/**
+ * Resolve the Pod name for a bound Sandbox, mirroring the controller's
+ * resolvePodName: the `agents.x-k8s.io/pod-name` annotation if present (warm-pool
+ * adoption), otherwise the Sandbox's own name.
+ */
+export function resolvePodName(sandbox: SandboxLike): string | undefined {
+  return sandbox.metadata?.annotations?.[SANDBOX_POD_NAME_ANNOTATION] ?? sandbox.metadata?.name;
 }
