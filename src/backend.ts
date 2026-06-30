@@ -5,8 +5,9 @@ import type {
   SandboxBackendExecSpec,
   SandboxBackendHandle,
 } from "openclaw/plugin-sdk/sandbox";
+import { sanitizeEnvVars } from "openclaw/plugin-sdk/sandbox";
 import { BACKEND_ID } from "./constants.js";
-import { buildWrapperArgv, EXEC_ENV_VAR, sanitizeExecEnv } from "./exec-spec.js";
+import { buildWrapperArgv, EXEC_ENV_VAR } from "./exec-spec.js";
 import type { BuildHandleArgs } from "./factory.js";
 
 export function buildRunShellInPodCommand(p: { script: string; args?: string[] }): string[] {
@@ -44,7 +45,7 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
       return {
         argv: wrapperArgvFor(inPodCommand, usePty, workdir),
         env: {
-          ...sanitizeExecEnv(process.env),
+          ...sanitizeEnvVars(process.env).allowed,
           [EXEC_ENV_VAR]: JSON.stringify(env ?? {}),
         },
         stdinMode: "pipe-open",
@@ -80,7 +81,7 @@ function runBufferedWrapper(
     const child = spawn(cmd, rest, {
       stdio: ["pipe", "pipe", "pipe"],
       env: {
-        ...sanitizeExecEnv(process.env),
+        ...sanitizeEnvVars(process.env).allowed,
         [EXEC_ENV_VAR]: JSON.stringify({}),
       },
     });
