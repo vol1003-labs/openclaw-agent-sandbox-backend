@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyK8sError, isPodReady } from "./k8s-client.js";
+import { classifyK8sError, isClaimReady, isPodReady } from "./k8s-client.js";
 
 describe("isPodReady", () => {
   it("true when Running and Ready=True", () => {
@@ -17,6 +17,21 @@ describe("isPodReady", () => {
     ).toBe(false);
     expect(isPodReady({ status: { phase: "Pending" } })).toBe(false);
     expect(isPodReady({})).toBe(false);
+  });
+});
+
+describe("isClaimReady", () => {
+  it("true when a Ready=True condition is present (forwarded from the bound Sandbox)", () => {
+    expect(isClaimReady({ status: { conditions: [{ type: "Ready", status: "True" }] } })).toBe(
+      true,
+    );
+  });
+  it("false when Ready is False, missing, or there is no status", () => {
+    expect(isClaimReady({ status: { conditions: [{ type: "Ready", status: "False" }] } })).toBe(
+      false,
+    );
+    expect(isClaimReady({ status: { conditions: [] } })).toBe(false);
+    expect(isClaimReady({})).toBe(false);
   });
 });
 

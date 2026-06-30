@@ -4,6 +4,7 @@ import type { ClaimLike, SandboxClaimManifest } from "./lifecycle.js";
 
 export type SandboxClaimObject = ClaimLike & {
   metadata: { name: string; namespace?: string; annotations?: Record<string, string> };
+  status?: { conditions?: Array<{ type?: string; status?: string }> };
 };
 
 export type PodLike = {
@@ -18,6 +19,17 @@ export class AlreadyExistsError extends Error {}
 export function isPodReady(pod: PodLike): boolean {
   if (pod.status?.phase !== "Running") return false;
   return (pod.status.conditions ?? []).some((c) => c.type === "Ready" && c.status === "True");
+}
+
+/**
+ * A SandboxClaim is "running" only when its forwarded Ready condition is True.
+ * The controller does NOT recreate a dead Pod (singleton workload); the claim
+ * lingers with Ready=False, so mere existence is not a liveness signal.
+ */
+export function isClaimReady(claim: {
+  status?: { conditions?: Array<{ type?: string; status?: string }> };
+}): boolean {
+  return (claim.status?.conditions ?? []).some((c) => c.type === "Ready" && c.status === "True");
 }
 
 export function classifyK8sError(err: unknown): "notfound" | "quota" | "alreadyexists" | "other" {

@@ -33,12 +33,31 @@ describe("describeRuntime", () => {
     expect(info.running).toBe(false);
     expect(info.configLabelMatch).toBe(true); // entry.image === warmPool
   });
-  it("running=true when the claim exists", async () => {
+  it("running=true when the claim is bound and Ready", async () => {
     const mgr = createAgentSandboxBackendManager({
       pluginConfig: cfg,
-      k8s: fakeK8s({ getClaim: async () => ({ metadata: { name: entry.containerName } }) as any }),
+      k8s: fakeK8s({
+        getClaim: async () =>
+          ({
+            metadata: { name: entry.containerName },
+            status: { conditions: [{ type: "Ready", status: "True" }] },
+          }) as any,
+      }),
     });
     expect((await mgr.describeRuntime({ entry, config: {} })).running).toBe(true);
+  });
+  it("running=false when the claim exists but is not Ready (dead Pod lingers, never recreated)", async () => {
+    const mgr = createAgentSandboxBackendManager({
+      pluginConfig: cfg,
+      k8s: fakeK8s({
+        getClaim: async () =>
+          ({
+            metadata: { name: entry.containerName },
+            status: { conditions: [{ type: "Ready", status: "False" }] },
+          }) as any,
+      }),
+    });
+    expect((await mgr.describeRuntime({ entry, config: {} })).running).toBe(false);
   });
 });
 
