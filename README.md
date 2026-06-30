@@ -38,8 +38,8 @@ All keys are optional; defaults are shown. Provide overrides via the plugin conf
 | `shutdownAfterSeconds` | `86400` | Sandbox hard shutdown deadline (set to now+this at factory; a zombie-sandbox safeguard). |
 | `readyTimeoutSeconds` | `120` | Max wait for the bound sandbox Pod to become Ready. |
 
-Per-exec env is passed to the in-pod command via `env KEY=value` (consistent with OpenClaw's other sandbox backends); truly sensitive secrets should be mounted as files via the host Pod spec (host environment) rather than passed as exec env.
+Per-exec env is passed to the in-pod command via `env KEY=value` (consistent with OpenClaw's other sandbox backends); truly sensitive secrets should be mounted as files via the host Pod spec rather than passed as exec env.
 
 ## Host wiring
 
-Deployment service account, NetworkPolicy, ConfigMap, RBAC, and resource quota configuration live in the host environment repo and are wired up in a separate session. This repo contains only the plugin code.
+Deployment service account, NetworkPolicy, ConfigMap, RBAC, and resource quota configuration are managed separately as host/cluster infrastructure. This repo contains only the plugin code.

@@ -53,7 +53,7 @@ export function classifyK8sError(err: unknown): "notfound" | "quota" | "alreadye
   if (status === 403) {
     // 403 covers BOTH ResourceQuota violations and RBAC/admission denials;
     // only call it "quota" when the message says so, so an RBAC misconfig is
-    // not mislabelled as quota-exceeded (acute during host environment RBAC wiring).
+    // not mislabelled as quota-exceeded (acute during cluster RBAC wiring).
     const body = typeof e?.body === "string" ? e.body : e?.body ? JSON.stringify(e.body) : "";
     return /exceeded quota/i.test(`${e?.message ?? ""} ${body}`) ? "quota" : "other";
   }
