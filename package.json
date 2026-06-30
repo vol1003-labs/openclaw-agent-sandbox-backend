@@ -6,7 +6,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vol1003/openclaw-agent-sandbox-backend"
+    "url": "https://github.com/vol1003-labs/openclaw-agent-sandbox-backend"
   },
   "files": [
     "dist",
@@ -22,6 +22,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "prepack": "npm run build"
   },
   "dependencies": {
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.1",
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "openclaw": "2026.6.10",
     "typescript": "^5.9.0",
     "vitest": "^2.0.0"
