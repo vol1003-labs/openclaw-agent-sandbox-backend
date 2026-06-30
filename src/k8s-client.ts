@@ -46,18 +46,30 @@ export interface SandboxK8sApi {
 }
 
 export function createSandboxK8sApi(): SandboxK8sApi {
-  const kc = new k8s.KubeConfig();
-  kc.loadFromCluster();
-  const custom = kc.makeApiClient(k8s.CustomObjectsApi);
-  const core = kc.makeApiClient(k8s.CoreV1Api);
   const g = {
     group: SANDBOX_CLAIM_GROUP,
     version: SANDBOX_CLAIM_VERSION,
     plural: SANDBOX_CLAIM_PLURAL,
   };
+  // Create the in-cluster clients lazily on first use so plugin (re-)registration
+  // stays side-effect-free: no loadFromCluster() file reads until a sandbox is touched.
+  // (OpenClaw rebuilds the whole plugin registry on any plugins.* config change.)
+  let clients: { custom: k8s.CustomObjectsApi; core: k8s.CoreV1Api } | null = null;
+  const get = () => {
+    if (clients === null) {
+      const kc = new k8s.KubeConfig();
+      kc.loadFromCluster();
+      clients = {
+        custom: kc.makeApiClient(k8s.CustomObjectsApi),
+        core: kc.makeApiClient(k8s.CoreV1Api),
+      };
+    }
+    return clients;
+  };
 
   return {
     async getClaim(ns, name) {
+      const { custom } = get();
       try {
         const res = await custom.getNamespacedCustomObject({ ...g, namespace: ns, name });
         return res as unknown as SandboxClaimObject;
@@ -68,6 +80,7 @@ export function createSandboxK8sApi(): SandboxK8sApi {
     },
 
     async createClaim(ns, manifest) {
+      const { custom } = get();
       try {
         const res = await custom.createNamespacedCustomObject({
           ...g,
@@ -91,6 +104,7 @@ export function createSandboxK8sApi(): SandboxK8sApi {
     },
 
     async patchClaim(ns, name, patch) {
+      const { custom } = get();
       await custom.patchNamespacedCustomObject(
         { ...g, namespace: ns, name, body: patch },
         k8s.setHeaderOptions("Content-Type", k8s.PatchStrategy.MergePatch),
@@ -98,6 +112,7 @@ export function createSandboxK8sApi(): SandboxK8sApi {
     },
 
     async deleteClaim(ns, name) {
+      const { custom } = get();
       try {
         await custom.deleteNamespacedCustomObject({ ...g, namespace: ns, name });
       } catch (err) {
@@ -107,6 +122,7 @@ export function createSandboxK8sApi(): SandboxK8sApi {
     },
 
     async getPod(ns, name) {
+      const { core } = get();
       try {
         const res = await core.readNamespacedPod({ namespace: ns, name });
         return res as unknown as PodLike;
