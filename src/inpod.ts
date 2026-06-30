@@ -5,7 +5,8 @@ function shSingleQuote(s: string): string {
 
 /**
  * Build the exact argv to run inside the Pod via pods/exec.
- * - `env` is injected with the `env` coreutil (values are argv items, not interpolated).
+ * - `env` is injected with the `env` coreutil (values are argv items, not interpolated);
+ *   a leading `--` stops option parsing so a `-`-prefixed name is not read as a flag.
  * - `workdir` is applied via `sh -c 'cd <q(workdir)> && exec "$@"' _ <base...>` so the
  *   base argv is passed positionally and never string-interpolated (injection-safe).
  */
@@ -20,7 +21,9 @@ export function composeInPodArgv(p: {
   }
   if (p.env && Object.keys(p.env).length > 0) {
     const pairs = Object.entries(p.env).map(([k, v]) => `${k}=${v}`);
-    argv = ["env", ...pairs, ...argv];
+    // `--` ends env option parsing so a variable name starting with `-`
+    // (e.g. "-i"/"-u"/"-S") is treated as an assignment, not an env flag.
+    argv = ["env", "--", ...pairs, ...argv];
   }
   return argv;
 }
