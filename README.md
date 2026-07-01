@@ -17,7 +17,7 @@ The host loads the bundled plugin from `./dist/index.js` (see the `openclaw.exte
 
 ### Install without npm (GitHub Release tarball)
 
-While an npm publish is pending, install directly from a built release asset:
+To install from a GitHub Release asset instead of npm, download the `.tgz` and hand it to OpenClaw:
 
 ```bash
 # download the asset for the pinned tag, then hand the local tarball to OpenClaw:
