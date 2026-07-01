@@ -1,6 +1,6 @@
 {
   "name": "openclaw-agent-sandbox-backend",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "OpenClaw sandbox backend that runs agent terminal/exec inside gVisor agent-sandbox (Kubernetes) Pods via in-cluster pods/exec.",
   "license": "MIT",
   "type": "module",
