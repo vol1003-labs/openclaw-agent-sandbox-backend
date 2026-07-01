@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0]
+
+### Added
+
+- `createFsBridge` on the sandbox backend handle: file tools (read/write/edit/apply_patch)
+  now operate inside the sandbox Pod via `pods/exec`, by reusing OpenClaw's own
+  `createRemoteShellSandboxFsBridge` (the same hardened remote-shell bridge the SSH
+  backend uses — mount-boundary enforcement, read-only protected skill dirs, symlink
+  canonicalization, hardlink rejection). Enables `sandbox.mode:"all"` to cover both exec
+  and file tools coherently. Requires `python3` + GNU coreutils in the sandbox runner.
+
+### Changed
+
+- Release workflow now attaches the built `.tgz` as a downloadable GitHub Release asset
+  (supports `openclaw plugins install <path-to.tgz>` for npm-free/offline install).
+
 ## [0.1.0] - 2026-06-30
 
 ### Added
