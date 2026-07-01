@@ -26,7 +26,7 @@ openclaw plugins install ./openclaw-agent-sandbox-backend-0.2.0.tgz
 
 `git:`/`github:` specs are NOT supported for this package — OpenClaw installs those with
 `npm install --ignore-scripts`, and `dist/` is not committed, so the plugin would fail to
-build. The sandbox runner must provide `python3` + GNU coreutils for the file-tool bridge.
+build.
 
 ## Develop
 
@@ -55,4 +55,36 @@ Per-exec env is passed to the in-pod command via `env KEY=value` (consistent wit
 
 ## Host wiring
 
-Deployment service account, NetworkPolicy, ConfigMap, RBAC, and resource quota configuration are managed separately as host/cluster infrastructure. This repo contains only the plugin code.
+This repo ships only the plugin. The plugin talks to Kubernetes **in-cluster only**
+(`loadFromCluster()`, no kubeconfig), so the OpenClaw host must run as a Pod. You provide,
+in the target `namespace`:
+
+- **agent-sandbox controller + CRDs** — [kubernetes-sigs/agent-sandbox](https://github.com/kubernetes-sigs/agent-sandbox)
+  installed (`SandboxClaim`, `Sandbox`, `WarmPool`).
+- **A `WarmPool`** (default `openclaw-runner`) whose Pod template has the runner container
+  (default `runner`) providing `python3` + GNU coreutils (for the file-tool bridge) and the
+  `workdir` (default `/workspace`).
+- **RBAC** binding the host's ServiceAccount to the Role below.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openclaw-agent-sandbox
+  namespace: openclaw # match the `namespace` config
+rules:
+  - apiGroups: [extensions.agents.x-k8s.io]
+    resources: [sandboxclaims]
+    verbs: [get, create, patch, delete]
+  - apiGroups: [agents.x-k8s.io]
+    resources: [sandboxes]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods/exec]
+    verbs: [create]
+```
+
+NetworkPolicy, quotas, and other cluster hardening are the operator's choice and out of scope.
