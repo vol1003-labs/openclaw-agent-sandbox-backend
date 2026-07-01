@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { describe, expect, it } from "vitest";
-import { parseExecEnv, runExecToExitCode } from "./exec-wrapper.js";
+import { describeError, parseExecEnv, runExecToExitCode } from "./exec-wrapper.js";
 
 type StatusCb = (status: {
   status?: string;
@@ -52,6 +52,46 @@ describe("parseExecEnv", () => {
 
   it("throws when a value is not a string", () => {
     expect(() => parseExecEnv('{"FOO":1}')).toThrow(/value for "FOO" must be a string/);
+  });
+});
+
+describe("describeError", () => {
+  /** Mimic a `ws` ErrorEvent: not an Error, no enumerable own props, real info is non-enumerable. */
+  function fakeWsErrorEvent(msg: string, withInner: boolean): unknown {
+    const ev: Record<string, unknown> = {};
+    Object.defineProperty(ev, "type", { value: "error", enumerable: false });
+    Object.defineProperty(ev, "message", { value: msg, enumerable: false });
+    if (withInner) Object.defineProperty(ev, "error", { value: new Error(msg), enumerable: false });
+    return ev;
+  }
+
+  it("returns the stack for an Error instance", () => {
+    const err = new Error("boom");
+    expect(describeError(err)).toBe(err.stack);
+  });
+
+  it("unwraps a ws ErrorEvent via its non-enumerable .error (real pods/exec 403)", () => {
+    const ev = fakeWsErrorEvent("Unexpected server response: 403", true);
+    // Sanity: this is exactly the shape that used to serialize to "[object Object]".
+    expect(ev instanceof Error).toBe(false);
+    expect(Object.keys(ev as object)).toEqual([]);
+    expect(describeError(ev)).toContain("Unexpected server response: 403");
+    expect(describeError(ev)).not.toBe("[object Object]");
+  });
+
+  it("falls back to a non-enumerable .message when there is no inner error", () => {
+    const ev = fakeWsErrorEvent("Unexpected server response: 403", false);
+    expect(describeError(ev)).toBe("Unexpected server response: 403");
+  });
+
+  it("returns a plain string throwable as-is", () => {
+    expect(describeError("kaboom")).toBe("kaboom");
+  });
+
+  it("dumps own enumerable properties for an opaque object", () => {
+    expect(describeError({ code: 403, reason: "Forbidden" })).toBe(
+      '{"code":403,"reason":"Forbidden"}',
+    );
   });
 });
 

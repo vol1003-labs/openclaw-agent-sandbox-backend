@@ -113,6 +113,30 @@ export function parseExecEnv(raw: string | undefined): Record<string, string> {
   return out;
 }
 
+/**
+ * Best-effort human-readable description of a thrown value.
+ *
+ * `String(err)` yields the useless `"[object Object]"` for non-`Error` throwables — most
+ * notably the `ws` `ErrorEvent` that `k8s.Exec.exec()` surfaces on a websocket handshake
+ * failure (e.g. an HTTP 403 on `pods/exec`). Its real message lives on the *non-enumerable*
+ * `.error` / `.message`, so `Object.keys`/`JSON.stringify` see `{}`. Unwrap those first, then
+ * fall back to an own-property JSON dump and finally `String()`.
+ */
+export function describeError(err: unknown): string {
+  if (err instanceof Error) return err.stack ?? err.message;
+  const anyErr = err as { message?: unknown; error?: unknown } | null | undefined;
+  if (anyErr?.error instanceof Error) return anyErr.error.stack ?? anyErr.error.message;
+  if (typeof anyErr?.message === "string" && anyErr.message) return anyErr.message;
+  if (typeof err === "string" && err) return err;
+  try {
+    const json = JSON.stringify(err, Object.getOwnPropertyNames(err ?? {}));
+    if (json && json !== "{}") return json;
+  } catch {
+    // circular / unserializable — fall through to String()
+  }
+  return String(err);
+}
+
 async function main(): Promise<void> {
   const a = parseWrapperArgs(process.argv.slice(2));
   const execEnv = parseExecEnv(process.env[EXEC_ENV_VAR]);
@@ -142,9 +166,7 @@ async function main(): Promise<void> {
 // Only run as a spawned binary, not when imported (e.g. by tests).
 if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((err) => {
-    process.stderr.write(
-      `agent-sandbox exec-wrapper fatal: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}\n`,
-    );
+    process.stderr.write(`agent-sandbox exec-wrapper fatal: ${describeError(err)}\n`);
     process.exit(1);
   });
 }

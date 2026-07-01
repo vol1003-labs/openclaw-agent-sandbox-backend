@@ -84,7 +84,10 @@ rules:
     verbs: [get]
   - apiGroups: [""]
     resources: [pods/exec]
-    verbs: [create]
+    # `get` is required: @kubernetes/client-node's Exec uses a WebSocket (an HTTP GET upgrade),
+    # authorized as `get pods/exec` — not the legacy SPDY/POST `create`. A ServiceAccount with
+    # only `create` gets a 403 on the exec handshake.
+    verbs: [get, create]
 ```
 
 NetworkPolicy, quotas, and other cluster hardening are the operator's choice and out of scope.
