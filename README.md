@@ -15,6 +15,19 @@ npm install openclaw-agent-sandbox-backend
 
 The host loads the bundled plugin from `./dist/index.js` (see the `openclaw.extensions` field). Requires OpenClaw `>=2026.6.10`.
 
+### Install without npm (GitHub Release tarball)
+
+To install from a GitHub Release asset instead of npm, download the `.tgz` and hand it to OpenClaw:
+
+```bash
+# download the asset for the pinned tag, then hand the local tarball to OpenClaw:
+openclaw plugins install ./openclaw-agent-sandbox-backend-0.2.0.tgz
+```
+
+`git:`/`github:` specs are NOT supported for this package — OpenClaw installs those with
+`npm install --ignore-scripts`, and `dist/` is not committed, so the plugin would fail to
+build. The sandbox runner must provide `python3` + GNU coreutils for the file-tool bridge.
+
 ## Develop
 
 ```bash

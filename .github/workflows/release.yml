@@ -49,6 +49,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Pack tarball
+        id: pack
+        run: |
+          file="$(npm pack --silent)"
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+          echo "packed asset: $file"
+
       - name: Resolve version from tag
         id: version
         run: |
@@ -98,4 +105,4 @@ jobs:
           else
             args+=(--latest)
           fi
-          gh release create "$tag" "${args[@]}"
+          gh release create "$tag" "${{ steps.pack.outputs.file }}" "${args[@]}"
