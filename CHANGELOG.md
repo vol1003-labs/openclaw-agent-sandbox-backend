@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-01
+
+### Fixed
+
+- `exec-wrapper` no longer masks the real failure as `"[object Object]"` for non-`Error`
+  throwables. The `ws` `ErrorEvent` that `k8s.Exec.exec()` emits on a websocket handshake
+  failure (e.g. an HTTP 403 on `pods/exec`) keeps its real message on non-enumerable
+  `.error` / `.message`; a new `describeError()` helper unwraps those, so the fatal line now
+  reads e.g. `Unexpected server response: 403` instead of `[object Object]` (#11).
+
+### Changed
+
+- README: the Role now grants `get` (in addition to `create`) on `pods/exec`, since the
+  `@kubernetes/client-node` Exec transport is a WebSocket (an HTTP `GET` upgrade) authorized
+  as `get pods/exec` — a ServiceAccount with only `create` gets a 403 on the exec handshake.
+
 ## [0.2.0]
 
 ### Added
@@ -36,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration keys: `namespace`, `warmPool`, `container`, `workdir`,
   `shutdownAfterSeconds`, `readyTimeoutSeconds`.
 
-[Unreleased]: https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vol1003-labs/openclaw-agent-sandbox-backend/releases/tag/v0.1.0
