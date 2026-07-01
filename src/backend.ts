@@ -9,6 +9,7 @@ import { sanitizeEnvVars } from "openclaw/plugin-sdk/sandbox";
 import { BACKEND_ID } from "./constants.js";
 import { buildWrapperArgv, EXEC_ENV_VAR } from "./exec-spec.js";
 import type { BuildHandleArgs } from "./factory.js";
+import { createAgentSandboxFsBridge } from "./fs-bridge.js";
 
 export function buildRunShellInPodCommand(p: { script: string; args?: string[] }): string[] {
   return ["/bin/sh", "-c", p.script, "agent-sandbox", ...(p.args ?? [])];
@@ -29,6 +30,17 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
     });
 
   const dockerEnv = createParams.cfg.docker.env;
+
+  const runShellCommand = async (
+    params: SandboxBackendCommandParams,
+  ): Promise<SandboxBackendCommandResult> => {
+    const inPodCommand = buildRunShellInPodCommand({
+      script: params.script,
+      ...(params.args ? { args: params.args } : {}),
+    });
+    const argv = wrapperArgvFor(inPodCommand, false);
+    return runBufferedWrapper(argv, params);
+  };
 
   return {
     id: BACKEND_ID,
@@ -51,16 +63,9 @@ export function createAgentSandboxBackend(args: BuildHandleArgs): SandboxBackend
       };
     },
 
-    async runShellCommand(
-      params: SandboxBackendCommandParams,
-    ): Promise<SandboxBackendCommandResult> {
-      const inPodCommand = buildRunShellInPodCommand({
-        script: params.script,
-        ...(params.args ? { args: params.args } : {}),
-      });
-      const argv = wrapperArgvFor(inPodCommand, false);
-      return runBufferedWrapper(argv, params);
-    },
+    runShellCommand,
+    createFsBridge: ({ sandbox }) =>
+      createAgentSandboxFsBridge({ run: runShellCommand, workdir: cfg.workdir, sandbox }),
   };
 }
 

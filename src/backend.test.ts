@@ -59,6 +59,37 @@ describe("createAgentSandboxBackend handle", () => {
   });
 });
 
+describe("createAgentSandboxBackend fs bridge", () => {
+  it("exposes createFsBridge returning a 7-method bridge under the config workdir", () => {
+    const h = createAgentSandboxBackend(args as any);
+    expect(typeof h.createFsBridge).toBe("function");
+    const bridge = h.createFsBridge?.({
+      sandbox: {
+        workspaceDir: "/workspace",
+        agentWorkspaceDir: "/workspace",
+        workspaceAccess: "ro",
+        containerName: "runner",
+        containerWorkdir: "/workspace",
+        docker: {},
+      },
+    });
+    for (const m of [
+      "resolvePath",
+      "readFile",
+      "writeFile",
+      "mkdirp",
+      "remove",
+      "rename",
+      "stat",
+    ]) {
+      expect(typeof (bridge as unknown as Record<string, unknown>)[m]).toBe("function");
+    }
+    expect(bridge?.resolvePath({ filePath: "a/b.txt" })).toMatchObject({
+      containerPath: "/workspace/a/b.txt",
+    });
+  });
+});
+
 describe("buildRunShellInPodCommand", () => {
   it("runs the script via /bin/sh -c with positional args after $0", () => {
     expect(buildRunShellInPodCommand({ script: "echo $1", args: ["a", "b"] })).toEqual([
